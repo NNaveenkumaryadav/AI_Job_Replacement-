@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ===============================
-# LOAD LOCAL VIDEO SAFELY
+# SAFE VIDEO LOADING
 # ===============================
 
 def get_video_base64(path):
@@ -33,7 +33,23 @@ if os.path.exists("video.mp4"):
 
 st.markdown(f"""
 <style>
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;600;700&display=swap');
+
 .stApp {{
+    background: transparent !important;
+}}
+
+.block-container {{
+    padding-top: 0rem !important;
+    padding-bottom: 0rem !important;
+}}
+
+header {{
+    background: transparent !important;
+}}
+
+[data-testid="stAppViewContainer"] {{
     background: transparent !important;
 }}
 
@@ -70,13 +86,74 @@ st.markdown(f"""
     z-index: -999;
 }}
 
+section[data-testid="stSidebar"] {{
+    background: rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.1);
+}}
+
+.hero-title {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #00f5ff, #ff00c8, #ffffff);
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 6s linear infinite;
+}}
+
+@keyframes shine {{
+    0% {{ background-position: 0% }}
+    100% {{ background-position: 300% }}
+}}
+
+.hero-subtitle {{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.75);
+    margin-top: -10px;
+}}
+
+.status-badge {{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(0,255,170,0.15);
+    color: #00ffaa;
+    border: 1px solid rgba(0,255,170,0.4);
+    display: inline-block;
+}}
+
 .bento-card {{
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(25px);
-    border-radius: 20px;
+    border-radius: 30px;
     padding: 2rem;
     border: 1px solid rgba(255,255,255,0.15);
+    transition: 0.3s;
 }}
+
+.bento-card:hover {{
+    transform: translateY(-6px);
+    box-shadow: 0 0 40px rgba(0,255,255,0.3);
+}}
+
+.stButton>button {{
+    background: linear-gradient(135deg, #00f5ff, #ff00c8) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 700 !important;
+    border-radius: 16px !important;
+    padding: 1rem 2rem !important;
+}}
+
 </style>
 
 {f'''
@@ -118,21 +195,28 @@ with st.sidebar:
 # HEADER
 # ===============================
 
-st.title("🤖 AI Job Replacement Intelligence Radar")
-st.markdown(f"### Analyzing risk for **{role}**")
+col1, col2 = st.columns([5,1])
 
-# ===============================
-# BEFORE RUN
-# ===============================
+with col1:
+    st.markdown('<div class="hero-title">Intelligence Radar</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="hero-subtitle">Scanning displacement vectors for <b>{role}</b></div>',
+        unsafe_allow_html=True
+    )
 
-if not run:
-    st.info("System Ready. Configure parameters and initialize forecast.")
+with col2:
+    st.markdown(
+        '<div style="margin-top:30px; text-align:right;">'
+        '<span class="status-badge">🟢 CORE ONLINE</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
 # ===============================
 # RUN FORECAST
 # ===============================
 
-else:
+if run:
 
     payload = {
         "job_role": role,
@@ -162,36 +246,54 @@ else:
             timeout=30
         )
 
-        if response.status_code != 200:
-            st.error(f"API returned error: {response.text}")
-            st.stop()
-
         data = response.json()
-
         prediction = data["prediction"]
         probabilities = data["class_probabilities"]
 
-        st.success(f"Prediction: {prediction}")
-        st.write("Confidence:", f"{max(probabilities.values())*100:.2f}%")
+        color = "#00f5ff"
+        if prediction == "High":
+            color = "#ff004c"
+        elif prediction == "Medium":
+            color = "#ffae00"
 
-        col1, col2 = st.columns(2)
+        k1, k2 = st.columns(2)
 
-        with col1:
+        with k1:
+            st.markdown(f"""
+            <div class="bento-card">
+                <h3>Risk Verdict</h3>
+                <h1 style="color:{color}; font-size:3rem;">{prediction}</h1>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with k2:
+            st.markdown(f"""
+            <div class="bento-card">
+                <h3>Confidence</h3>
+                <h1>{max(probabilities.values())*100:.1f}%</h1>
+            </div>
+            """, unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
             fig = go.Figure(data=[go.Pie(
                 labels=list(probabilities.keys()),
                 values=list(probabilities.values()),
-                hole=0.6
+                hole=0.75
             )])
+            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig, use_container_width=True)
 
-        with col2:
+        with col_chart2:
             radar = go.Figure()
             radar.add_trace(go.Scatterpolar(
                 r=[auto, gap*10, adoption*10, 60],
                 theta=["Automation","Skill Gap","AI Adoption","Market Flux"],
                 fill='toself'
             ))
+            radar.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(radar, use_container_width=True)
 
     except Exception as e:
-        st.error(f"API Connection Error: {e}")
+        st.error(f"API Error: {e}")
