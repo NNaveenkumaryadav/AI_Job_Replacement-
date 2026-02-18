@@ -157,7 +157,7 @@ else:
 
     try:
         response = requests.post(
-            "https://ai-job-replacement.onrender.com/predict",
+            "https://ai-job-replacement-backend.onrender.com/predict",
             json=payload,
             timeout=30
         )
