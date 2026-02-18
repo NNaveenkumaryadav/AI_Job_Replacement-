@@ -6,3 +6,7 @@ numpy
 joblib
 imbalanced-learn
 pydantic
+streamlit
+plotly
+requests
+
