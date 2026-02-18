@@ -251,7 +251,8 @@ else:
         progress.progress(i+1)
 
     try:
-        response = requests.post("http://127.0.0.1:8000/predict", json=payload)
+        response = requests.post("https://ai-job-replacement.onrender.com/predict", json=payload)
+
         data = response.json()
 
         prediction = data["prediction"]
@@ -305,3 +306,4 @@ else:
 
     except Exception as e:
         st.error(f"API Error: {e}")
+
